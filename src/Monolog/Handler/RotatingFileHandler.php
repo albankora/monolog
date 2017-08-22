@@ -35,6 +35,7 @@ class RotatingFileHandler extends StreamHandler
     protected $nextRotation;
     protected $filenameFormat;
     protected $dateFormat;
+    protected $globFormat;
 
     /**
      * @param string   $filename
@@ -51,6 +52,7 @@ class RotatingFileHandler extends StreamHandler
         $this->nextRotation = new \DateTimeImmutable('tomorrow');
         $this->filenameFormat = '{filename}-{date}';
         $this->dateFormat = 'Y-m-d';
+        $this->globFormat = '20[0-9][0-9]-[01][0-9]-[0-3][0-9]';
 
         parent::__construct($this->getTimedFilename(), $level, $bubble, $filePermission, $useLocking);
     }
@@ -67,7 +69,7 @@ class RotatingFileHandler extends StreamHandler
         }
     }
 
-    public function setFilenameFormat($filenameFormat, $dateFormat)
+    public function setFilenameFormat($filenameFormat, $dateFormat, $globFormat)
     {
         if (!preg_match('{^Y(([/_.-]?m)([/_.-]?d)?)?$}', $dateFormat)) {
             throw new InvalidArgumentException(
@@ -84,6 +86,7 @@ class RotatingFileHandler extends StreamHandler
         }
         $this->filenameFormat = $filenameFormat;
         $this->dateFormat = $dateFormat;
+        $this->globFormat = $globFormat;
         $this->url = $this->getTimedFilename();
         $this->close();
     }
@@ -166,7 +169,7 @@ class RotatingFileHandler extends StreamHandler
         $fileInfo = pathinfo($this->filename);
         $glob = str_replace(
             ['{filename}', '{date}'],
-            [$fileInfo['filename'], '*'],
+            [$fileInfo['filename'], $this->globFormat],
             $fileInfo['dirname'] . '/' . $this->filenameFormat
         );
         if (!empty($fileInfo['extension'])) {
